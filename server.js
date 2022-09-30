@@ -13,7 +13,7 @@ const db = mysql.createConnection({
 // if db doesn't connect, throw error
 db.connect(err => {
     if (err) throw err;
-    initialPrompt();
+    initialQuestion();
 });
 
 const initialQuestion = () => {
@@ -56,3 +56,31 @@ const initialQuestion = () => {
         }
     })
 }
+
+// View Departments
+const viewDepartments = () => {
+    console.log("Department View");
+
+}
+
+// View Roles
+const viewRoles = () => {
+    console.log("Role View");
+
+}
+
+// View Employees
+const viewEmployees = () => {
+    console.log("Employee View");
+
+}
+
+// Add Department
+
+
+// Add Role
+
+
+// Add Employee
+
+// Update Employee Role
