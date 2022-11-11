@@ -27,30 +27,31 @@ const initialQuestion = () => {
         }
         // switch cases for each option
     ]).then((response) => {
+        console.table(response)
         switch (response.action) {
-            case "View all departments":
+            case "View All Departments":
                 viewDepartments();
                 break;
-            case "View all roles":
+            case "View All Roles":
                 viewRoles();
                 break;
-            case "View all employees":
+            case "View All Employees":
                 viewEmployees();
                 break;
-            case "Add a department":
+            case "Add Department":
                 addDepartment();
                 break;
-            case "Add a role":
+            case "Add Role":
                 addRole();
                 break;
-            case "Add an employee":
+            case "Add Employee":
                 addEmployee();
                 break;
-            case "Update role for an employee":
+            case "Update Employee Role":
                 updateRole();
                 break;
             case "End Session":
-                connection.end();
+                db.end();
                 break;
             default:
                 break;
@@ -74,7 +75,7 @@ const viewDepartments = () => {
 const viewRoles = () => {
     console.log("Role View");
 
-    var sql = 'SELECT role.id, role.title, role.salary, department.name AS department FROM role JOIN department ON role.department_id = department_id';
+    var sql = 'SELECT role.id, role.title, role.salary, department.name AS department FROM role JOIN department ON role.department_id = department.id';
     db.query(sql, (err, res) => {
         if (err) throw err;
         console.table(res);
@@ -86,7 +87,7 @@ const viewRoles = () => {
 const viewEmployees = () => {
     console.log("Employee View");
 
-    var sql = 'SELECT e.first_name, e.last_name, r.title, r.salary, d.name, CONCAT(manager.first_name, " ", manager.last_name) AS manager_name FROM employee e JOIN role r ON e.role_id = r.id JOIN department d ON r department_id = d.id LEFT JOIN employee manager ON manager.id = e.manager_id ORDER BY salary DESC';
+    var sql = 'SELECT employee.first_name, employee.last_name, role.title, role.salary, department.name AS department_name, CONCAT(manager.first_name, " ", manager.last_name) AS manager_name FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON manager.id = employee.manager_id ORDER BY role.salary DESC';
     db.query(sql, (err, res) => {
         if (err) throw err;
         console.table(res);
@@ -105,9 +106,9 @@ const addDepartment = () => {
     ]).then(answer => {
         var sql = 'INSERT INTO department (name) VALUES (?)';
 
-        connection.query(sql, answer.addDepartment, (err, res) => {
+        db.query(sql, answer.newDepartment, (err, res) => {
             if (err) throw err;
-            console.log(answer.addDepartment + ' was added as a new department');
+            console.log(answer.newDepartment + ' was added as a new department');
             console.table('All Departments');
 
             viewDepartments();
@@ -122,7 +123,7 @@ const addRole = () => {
    
     const role = 'SELECT id, name FROM department';
 
-    connection.query(role, (err, res) => {
+    db.query(role, (err, res) => {
         if (err) throw err;
 
         const department = res.map(({ id, name }) => ({ value: id, name: name }));
@@ -145,11 +146,11 @@ const addRole = () => {
                 choices: department
             }
         ]).then(answer => {
-            const input = [answer.role, answer.salary, answer.dept]
+            const input = [answer.newRole, answer.salary, answer.dept]
 
             const sql = 'INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?);'
 
-            connection.query(sql, input, (err, res) => {
+            db.query(sql, input, (err, res) => {
                 if (err) throw err;
                 console.log('Added ' + answer.role + ' to roles');
                 viewRoles();
@@ -162,11 +163,23 @@ const addRole = () => {
 
 const addEmployee= () => {
 
-    connection.query('SELECT * from role', (err, res) => {
+    db.query('SELECT * from role', (err, res) => {
         const roles = res.map(({ id, title }) => ({ value: id, name: title }))
 
-        
-}
+        inquirer.prompt([
+            {
+                type: 'input',
+                name: 'newEmployee',
+                message: 'Please enter name of employee'
+            },
+            {
+                type: 'list',
+                name: 'role',
+                message: ''
+            }
+        ])
+    });
+};
 
 
 // Update Employee Role
