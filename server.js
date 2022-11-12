@@ -1,7 +1,8 @@
 // package requirments
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
-const cTable = require('console.table')
+// const cTable = require('console.table');
+// const Connection = require('mysql2/typings/mysql/lib/Connection');
 // connection to database
 const db = mysql.createConnection({
     host: 'localhost',
@@ -87,7 +88,7 @@ const viewRoles = () => {
 const viewEmployees = () => {
     console.log("Employee View");
 
-    var sql = 'SELECT employee.first_name, employee.last_name, role.title, role.salary, department.name AS department_name, CONCAT(manager.first_name, " ", manager.last_name) AS manager_name FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON manager.id = employee.manager_id ORDER BY role.salary DESC';
+    var sql = 'SELECT employee.firstName, employee.lastName, role.title, role.salary, department.name AS department_name, CONCAT(manager.firstName, " ", manager.lastName) AS manager_name FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON manager.id = employee.manager_id ORDER BY role.salary DESC';
     db.query(sql, (err, res) => {
         if (err) throw err;
         console.table(res);
@@ -120,7 +121,7 @@ const addDepartment = () => {
 // Add Role
 
 const addRole = () => {
-   
+
     const role = 'SELECT id, name FROM department';
 
     db.query(role, (err, res) => {
@@ -152,7 +153,7 @@ const addRole = () => {
 
             db.query(sql, input, (err, res) => {
                 if (err) throw err;
-                console.log('Added ' + answer.role + ' to roles');
+                console.log('Added ' + answer.newRole + ' to roles');
                 viewRoles();
             });
         });
@@ -161,7 +162,7 @@ const addRole = () => {
 
 // Add Employee
 
-const addEmployee= () => {
+const addEmployee = () => {
 
     db.query('SELECT * from role', (err, res) => {
         const roles = res.map(({ id, title }) => ({ value: id, name: title }))
@@ -169,15 +170,47 @@ const addEmployee= () => {
         inquirer.prompt([
             {
                 type: 'input',
-                name: 'newEmployee',
-                message: 'Please enter name of employee'
+                name: 'firstName',
+                message: 'Please enter first name of employee'
+            },
+            {
+                type: 'input',
+                name: 'lastName',
+                message: 'Please enter last name of employee'
             },
             {
                 type: 'list',
-                name: 'role',
-                message: ''
-            }
-        ])
+                name: 'employeeRole',
+                message: 'What is this employees role?',
+                choices: roles
+            },
+        ]).then(answer => {
+            const inputData = [answer.firstName, answer.lastName, answer.employeeRole];
+
+            db.query('SELECT * FROM employee', (err, res) => {
+                const managers = res.map(({ id, firstName, lastName }) => ({ name: firstName + " " + lastName, value: id }));
+
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'manager',
+                        message: "Who is the employee's manager?",
+                        choices: managers
+                    }
+                ]).then(mgrChoice => {
+                    const manager = mgrChoice.manager;
+                    inputData.push(manager);
+
+                    const sqlEmp = 'INSERT INTO employee (firstName, lastName, role_id, manager_id) VALUES (?, ?, ?, ?)';
+
+                    db.query(sqlEmp, inputData, (err, res) => {
+                        if (err) throw err;
+                        viewEmployees();
+                    });
+                });
+
+            });
+        });
     });
 };
 
